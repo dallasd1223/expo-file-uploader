@@ -8,6 +8,9 @@ import { decode } from 'base64-arraybuffer';
 import { supabase } from '../../config/initSupabase';
 import { FileObject } from '@supabase/storage-js';
 import ImageItem from '@/components/ImageItem';
+import * as DocumentPicker from 'expo-document-picker'
+import * as FileViewer from 'react-native-file-viewer'
+import {openBrowserAsync} from 'expo-web-browser'
 
 const List = () => {
   const { user } = useAuth();
@@ -27,18 +30,18 @@ const List = () => {
   }
 
   const onSelectImage = async () => {
-    const options: ImagePicker.ImagePickerOptions = {
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+    const options: DocumentPicker.DocumentPickerOptions = {
+        multiple: false,
+        type: 'application/pdf',
     };
 
-    const result = await ImagePicker.launchImageLibraryAsync(options);
+    const result = await DocumentPicker.getDocumentAsync(options);
 
     if (!result.canceled) {
       const img = result.assets[0];
       const base64 = await FileSystem.readAsStringAsync(img.uri, { encoding: 'base64' });
-      const filePath = `${user!.id}/${new Date().getTime()}.${img.type === 'image' ? 'png' : 'mp4'}`;
-      const contentType = img.type === 'image' ? 'image/png' : 'video/mp4';
+      const filePath = `${user!.id}/${img.name}`;
+      const contentType = 'application/pdf';
       await supabase.storage.from('files').upload(filePath, decode(base64), { contentType });
       loadImages();
     }
@@ -51,17 +54,22 @@ const List = () => {
     setFiles(newFiles);
   }
 
+  const onDownloadFile = async (item: FileObject) => {
+    const {data} = await supabase.storage.from('files').getPublicUrl(`${user!.id}/${item.name}`);
+    openBrowserAsync(data.publicUrl);
+  }
+
   return (
     <View style={styles.container}>
         <ScrollView>
         {files.map((item, index) => (
-          <ImageItem key={item.id} item={item} userId={user!.id} onRemoveImage={() => onRemoveImage(item, index)} />
+          <ImageItem key={item.id} item={item} userId={user!.id} onRemoveImage={() => onRemoveImage(item, index)} onDownloadFile={() => onDownloadFile(item)}/>
         ))}
       </ScrollView>
 
       {/* FAB to add images */}
       <TouchableOpacity onPress={onSelectImage} style={styles.fab}>
-        <Ionicons name="camera-outline" size={30} color={'#fff'} />
+        <Ionicons name="document-text-outline" size={30} color={'#fff'} />
       </TouchableOpacity>
     </View>
   );

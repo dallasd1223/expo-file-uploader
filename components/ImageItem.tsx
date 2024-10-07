@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 // Image item component that displays the image from Supabase Storage and a delte button
-const ImageItem = ({ item, userId, onRemoveImage }: { item: FileObject; userId: string; onRemoveImage: () => void }) => {
+const ImageItem = ({ item, userId, onRemoveImage, onDownloadFile }: { item: FileObject; userId: string; onRemoveImage: () => void; onDownloadFile: () => void }) => {
   const [image, setImage] = useState<string>('');
 
   supabase.storage
@@ -21,12 +21,15 @@ const ImageItem = ({ item, userId, onRemoveImage }: { item: FileObject; userId: 
 
   return (
     <View style={{ flexDirection: 'row', margin: 1, alignItems: 'center', gap: 5 }}>
-      {image ? <Image style={{ width: 80, height: 80 }} source={{ uri: image }} /> : <View style={{ width: 80, height: 80, backgroundColor: '#1A1A1A' }} />}
-      <Text style={{ flex: 1, color: '#fff' }}>{item.name}</Text>
-      {/* Delete image button */}
-      <TouchableOpacity onPress={onRemoveImage}>
-        <Ionicons name="trash-outline" size={20} color={'#fff'} />
+      <TouchableOpacity onPress={onDownloadFile}>
+        {image ? <Image style={{ width: 80, height: 80 }} source={{ uri: image }} /> : <View style={{ width: 80, height: 80, backgroundColor: '#1A1A1A' }} />}
       </TouchableOpacity>
+        <Text style={{ flex: 1, color: '#fff' }}>{item.name}</Text>
+        {/* Delete image button */}
+        <TouchableOpacity onPress={onRemoveImage}>
+          <Ionicons name="trash-outline" size={20} color={'#fff'} />
+        </TouchableOpacity>
+
     </View>
   );
 };
